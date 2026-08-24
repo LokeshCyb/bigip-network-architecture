@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-08-24T17:50:00Z" agent="F5 BIG-IP Config Parser" version="1.0">
+  <diagram id="bigip_network_arch" name="F5 BIG-IP Network Architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Internet/Clients -->
+        <mxCell id="internet" value="Internet Clients&#xa;(Global Access)&#xa;0.0.0.0/0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="20" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- F5 BIG-IP HA Pair Container -->
+        <mxCell id="bigip_container" value="F5 BIG-IP Load Balancer Cluster (HA Pair)&#xa;TMSH v17.1.3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=3;fontSize=13;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="250" y="130" width="700" height="500" as="geometry"/>
+        </mxCell>
+        
+        <!-- Primary LB -->
+        <mxCell id="primary_lb" value="SGP-TCX-MGH-IPC-LB01 (PRIMARY)&#xa;Mgmt: 100.67.241.163/27&#xa;Self: 100.67.239.249/24&#xa;Float: 100.67.239.250/24&#xa;HA: 100.67.242.67/27" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="160" width="300" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Secondary LB -->
+        <mxCell id="secondary_lb" value="SGP-TCX-MGH-IPC-LB02 (SECONDARY)&#xa;Mgmt: 100.67.241.162/27&#xa;Self: 100.67.239.248/24&#xa;Mirror: 100.67.239.248&#xa;HA: 100.67.242.66/27" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="650" y="160" width="300" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Network Interfaces & VLAN Config -->
+        <mxCell id="vlan_config" value="Network Interfaces &amp; VLANs&#xa;━━━━━━━━━━━━━━━━━━━━━━&#xa;VLAN 816 (Production):&#xa;  Interface 1.2 | STP Enabled&#xa;  Failsafe: Enabled (45s)&#xa;━━━━━━━━━━━━━━━━━━━━━━&#xa;VLAN 766 (HA Cluster):&#xa;  Interface 1.3 | STP Enabled&#xa;━━━━━━━━━━━━━━━━━━━━━━&#xa;Interface 1.1: 10G Reserved" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="380" y="280" width="440" height="140" as="geometry"/>
+        </mxCell>
+        
+        <!-- Virtual Servers Layer -->
+        <mxCell id="vs_layer" value="Virtual Servers &amp; Load Balancing Layer (65+ VIPs)&#xa;IP Range: 100.67.239.100-247" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="250" y="450" width="700" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Connection lines -->
+        <mxCell id="internet_to_bigip" edge="1" parent="1" source="internet" target="bigip_container">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="primary_to_vlan" edge="1" parent="1" source="primary_lb" target="vlan_config">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="secondary_to_vlan" edge="1" parent="1" source="secondary_lb" target="vlan_config">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vlan_to_vs" edge="1" parent="1" source="vlan_config" target="vs_layer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  
+  <!-- Detailed Virtual Servers Diagram -->
+  <diagram id="virtual_servers" name="Virtual Servers &amp; Pools">
+    <mxGraphModel dx="1200" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1600" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Title -->
+        <mxCell id="title" value="Virtual Servers &amp; Backend Pools - Production Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#003399;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1380" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Web & Portal Services -->
+        <mxCell id="web_portal_title" value="WEB &amp; PORTAL SERVICES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffb3b3;strokeColor=#990000;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="10" y="70" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_b2b_api" value="VIP: 100.67.239.181:80/443&#xa;→ B2B_API_Pool&#xa;├─ 100.67.239.6:4000&#xa;└─ 100.67.239.7:4000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6e6;strokeColor=#ff0000;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="10" y="110" width="150" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_b2b_web" value="VIP: 100.67.239.236:80/443&#xa;→ B2B_WEB01_Pool&#xa;├─ 100.67.239.6:4010&#xa;└─ 100.67.239.7:4010" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6e6;strokeColor=#ff0000;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="170" y="110" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_bo_web" value="VIP: 100.67.239.235:80/443&#xa;→ BO_WEB_Pool&#xa;├─ 100.67.239.13:4001&#xa;└─ 100.67.239.14:4001&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6e6;strokeColor=#ff0000;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="340" y="110" width="180" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Extranet Services -->
+        <mxCell id="extranet_title" value="EXTRANET SERVICES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#b3d9ff;strokeColor=#003399;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="535" y="70" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_extranet_web" value="VIP: 100.67.239.234:80/443&#xa;→ Extranet_WEB_Pool&#xa;├─ 100.67.239.13:4005&#xa;└─ 100.67.239.14:4005&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f2ff;strokeColor=#0066cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="535" y="110" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_extranet_api" value="VIP: 100.67.239.244:80&#xa;→ Extrenet_API_Pool&#xa;├─ 100.67.239.129:80&#xa;├─ 100.67.239.130:80&#xa;├─ 100.67.239.13:80&#xa;└─ 100.67.239.14:80" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f2ff;strokeColor=#0066cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="705" y="110" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- API Gateway & Booking -->
+        <mxCell id="gateway_title" value="API GATEWAY &amp; BOOKING SERVICES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffb3;strokeColor=#999900;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="70" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_cm_api" value="VIP: 100.67.239.231:80/443&#xa;→ CM_API_9003&#xa;├─ 100.67.239.101:9003&#xa;├─ 100.67.239.103:9003&#xa;└─ 100.67.239.127:9003&#xa;(7 members total)&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffff0;strokeColor=#999900;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="1060" y="110" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_gateway" value="VIP: 100.67.239.243:80/443&#xa;→ Gateway_API_Pool&#xa;├─ 100.67.239.20:5090&#xa;└─ 100.67.239.21:5090" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffff0;strokeColor=#999900;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="1230" y="110" width="150" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Search Integration Services -->
+        <mxCell id="si_title" value="SEARCH INTEGRATION (SI) SERVICES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e6ccff;strokeColor=#6600cc;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="10" y="220" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_si_api" value="VIP: 100.67.239.183:80&#xa;→ SI_API_Pool&#xa;(26 members)&#xa;100.67.239.37-89&#xa;100.67.239.108-109&#xa;100.67.239.135-138&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e6ff;strokeColor=#6600cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="10" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_si_cache" value="VIP: 100.67.239.123:80&#xa;→ SI_Cache_CB&#xa;├─ 100.67.239.110:80&#xa;├─ 100.67.239.67:80&#xa;└─ 100.67.239.68:80&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e6ff;strokeColor=#6600cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="180" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_siui_web" value="VIP: 100.67.239.230:80/443&#xa;→ SIUI_WEB&#xa;└─ 100.67.239.6:5000&#xa;(Single Member)&#xa;Monitor: TCP + HTTP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e6ff;strokeColor=#6600cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="350" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- XML Sell Services -->
+        <mxCell id="xmlsell_title" value="XML SELL SERVICES (Multiple Versions)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ccffcc;strokeColor=#00cc00;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="535" y="220" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_xmlsell_v2" value="VIP: 100.67.239.239:80/443&#xa;→ XmlSell_APIV2_Pool&#xa;├─ 100.67.239.107:80&#xa;├─ 100.67.239.142:80&#xa;├─ 100.67.239.62:80&#xa;└─ 100.67.239.65:80" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ffe6;strokeColor=#00cc00;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="535" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_xmlsell_v3" value="VIP: 100.67.239.186:443&#xa;→ XmlSell_APIV3_Pool&#xa;└─ 100.67.239.7:6003&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ffe6;strokeColor:#00cc00;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="705" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_xmlsell_v4" value="VIP: 100.67.239.237:80/443&#xa;→ XmlSell_APIV4_Pool (Search)&#xa;(20 members)&#xa;100.67.239.46-60&#xa;100.67.239.106, 113, 120&#xa;LB: Least Connections" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ffe6;strokeColor=#00cc00;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="875" y="260" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- CMS & Authentication -->
+        <mxCell id="cms_title" value="CMS &amp; AUTHENTICATION" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffccb3;strokeColor=#ff6600;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="220" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_cms_api" value="VIP: 100.67.239.232:80/443&#xa;→ CMS_API_Pool&#xa;├─ 100.67.239.8:8888&#xa;└─ 100.67.239.9:8888" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#ff6600;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="1060" y="260" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_sts_web" value="VIP: 100.67.239.233:80/443&#xa;→ STS_WEB_Pool (Auth)&#xa;├─ 100.67.239.8:5000&#xa;└─ 100.67.239.9:5000&#xa;Persistence: Hash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#ff6600;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="1230" y="260" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Notification & Analytics -->
+        <mxCell id="notif_title" value="NOTIFICATION &amp; ANALYTICS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffb3e6;strokeColor=#cc0099;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="10" y="400" width="330" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_notification" value="VIP: 100.67.239.242:80/443&#xa;→ Notification_API_Pool&#xa;├─ 100.67.239.10:5757&#xa;├─ 100.67.239.111:5757&#xa;└─ 100.67.239.9:5757" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6f2;strokeColor=#cc0099;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="10" y="440" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_pdf" value="VIP: 100.67.239.241:80&#xa;→ PDF_API_Pool&#xa;├─ 100.67.239.10:7080&#xa;└─ 100.67.239.11:7080" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6f2;strokeColor=#cc0099;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="180" y="440" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_reports" value="VIP: 100.67.239.245:80/443&#xa;→ Report_Pool&#xa;└─ 100.67.240.15:8080" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6f2;strokeColor=#cc0099;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="350" y="440" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_elasticsearch" value="VIP: 100.67.239.246:9200&#xa;→ int_Ela_search&#xa;├─ 100.67.240.14:9200&#xa;└─ 100.67.240.15:9200&#xa;Monitor: TCP + HTTP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6f2;strokeColor=#cc0099;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="520" y="440" width="160" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Backend Server Networks -->
+        <mxCell id="backend_title" value="BACKEND SERVER NETWORKS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccccff;strokeColor=#0000cc;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="10" y="580" width="1380" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="prod_servers" value="PRODUCTION SERVERS&#xa;100.67.239.6-148&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;API Servers: .6-28 (23)&#xa;  ├─ B2B APIs: .6-.7&#xa;  ├─ CMS APIs: .8-.9&#xa;  ├─ Gateway: .20-.21&#xa;  └─ Others: .10-.28&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Search (SI): .37-89&#xa;  (26+ dedicated SI servers)&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Channel Mgr &amp; XML:&#xa;  .101-.148 (48 servers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6ff;strokeColor=#0000cc;strokeWidth=2;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="10" y="630" width="280" height="200" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="vip_addresses" value="VIRTUAL SERVER ADDRESSES&#xa;100.67.239.100-247&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;VIPs Distribution:&#xa;  ├─ .100: Extranet XML&#xa;  ├─ .102: Sphinx API&#xa;  ├─ .116: VCC API&#xa;  ├─ .123: SI Cache CB&#xa;  ├─ .150: mgholiday&#xa;  ├─ .152: mgholiday (v2)&#xa;  ├─ .167: VIC Dashboard&#xa;  ├─ .180-247: Main services&#xa;  └─ .249-250: HA Addresses" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6ff;strokeColor=#0000cc;strokeWidth=2;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="300" y="630" width="280" height="200" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="remote_servers" value="REMOTE SERVERS&#xa;100.120.4.x&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Back Office Web:&#xa;  ├─ .5:80 (Primary - DOWN)&#xa;  └─ .15:80 (Secondary - DOWN)&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Gateway Servers:&#xa;  ├─ .7:80 (Primary - DOWN)&#xa;  └─ .17:80 (Secondary - DOWN)&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;External Services:&#xa;  ├─ .37: mgholiday&#xa;  └─ .54: mgholiday" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6ff;strokeColor=#0000cc;strokeWidth=2;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="590" y="630" width="280" height="200" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="analytics_cluster" value="ANALYTICS CLUSTER&#xa;100.67.240.x&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Elasticsearch:&#xa;  ├─ .14:9200&#xa;  └─ .15:9200&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Reports:&#xa;  └─ .15:8080" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6ff;strokeColor=#0000cc;strokeWidth=2;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="880" y="630" width="280" height="200" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="ha_cluster" value="HA/CLUSTER NETWORK&#xa;100.67.242.0/27&#xa;100.67.239.248-250&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;State Mirroring:&#xa;  ├─ Primary: 100.67.242.67&#xa;  └─ Secondary: 100.67.239.249&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Configuration Sync:&#xa;  Auto-Sync: Enabled" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6ff;strokeColor=#0000cc;strokeWidth=2;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="1170" y="630" width="220" height="200" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  
+  <!-- Traffic Flow Diagram -->
+  <diagram id="traffic_flow" name="Traffic Flow &amp; Processing">
+    <mxGraphModel dx="1200" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1000" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <mxCell id="title" value="Traffic Flow &amp; Processing Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#003366;strokeColor=#000000;strokeWidth=2;fontSize=14;fontStyle=1;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="800" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 1: Internet -->
+        <mxCell id="tf_internet" value="Internet Clients&#xa;HTTP/HTTPS Requests" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#990000;strokeWidth=2;fontSize=10;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="80" width="300" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 2: SSL Termination -->
+        <mxCell id="tf_ssl" value="SSL/TLS Termination&#xa;Certificate: MGH_Wildcard_2026&#xa;TLS 1.2/1.3 | Cipher Group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#ff9900;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="170" width="300" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 3: iRule Processing -->
+        <mxCell id="tf_irule" value="iRule Processing&#xa;├─ HTTP Redirects&#xa;├─ Header Injection (X-Forwarded)&#xa;└─ Custom Routing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffcc;strokeColor=#999900;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="270" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 4: Virtual Server Selection -->
+        <mxCell id="tf_vs" value="Virtual Server Selection&#xa;(VIP: 100.67.239.100-247)&#xa;Based on destination port/protocol" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccf0ff;strokeColor=#0066cc;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="370" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 5: Pool Selection -->
+        <mxCell id="tf_pool" value="Pool &amp; Load Balancing&#xa;├─ Least Connections&#xa;├─ Round Robin&#xa;└─ Hash-based Persistence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f3ff;strokeColor=#0066cc;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="470" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 6: Backend Selection -->
+        <mxCell id="tf_backend" value="Backend Server Selection&#xa;Health Check Monitoring&#xa;(TCP, HTTP, ICMP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccffcc;strokeColor=#009900;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="570" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 7: Server Processing -->
+        <mxCell id="tf_server" value="Backend Servers Process Request&#xa;100.67.239.6-148 | 100.67.240.x | 100.120.4.x" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ccff;strokeColor=#6600cc;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="670" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 8: Response & Return -->
+        <mxCell id="tf_response" value="Response Processing&#xa;├─ Compression (GZIP)&#xa;├─ Header Manipulation&#xa;└─ State Mirroring to Secondary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6f2;strokeColor=#cc0099;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="450" y="770" width="300" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Stage 9: Client Response -->
+        <mxCell id="tf_client" value="Response to Client&#xa;via SSL/TLS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#990000;strokeWidth=2;fontSize=10;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="870" width="300" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows connecting stages -->
+        <mxCell id="arrow1" edge="1" parent="1" source="tf_internet" target="tf_ssl">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="tf_ssl" target="tf_irule">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="tf_irule" target="tf_vs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="tf_vs" target="tf_pool">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow5" edge="1" parent="1" source="tf_pool" target="tf_backend">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow6" edge="1" parent="1" source="tf_backend" target="tf_server">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow7" edge="1" parent="1" source="tf_server" target="tf_response">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow8" edge="1" parent="1" source="tf_response" target="tf_client">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Side annotations -->
+        <mxCell id="annotation_ha" value="HA/Failover Monitoring&#xa;State Mirroring Active" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffee;strokeColor=#666666;strokeWidth=1;strokeDasharray=3;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="150" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="annotation_health" value="Continuous Health Checks&#xa;Monitor: TCP, HTTP, ICMP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffee;strokeColor=#666666;strokeWidth=1;strokeDasharray=3;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="970" y="400" width="150" height="80" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  
+  <!-- HA Configuration Diagram -->
+  <diagram id="ha_config" name="High Availability Configuration">
+    <mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="800" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <mxCell id="ha_title" value="High Availability (HA) Configuration - Active/Standby Failover" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#003399;strokeColor=#000000;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="900" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Primary Device -->
+        <mxCell id="ha_primary" value="SGP-TCX-MGH-IPC-LB01 (ACTIVE)&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Management IP: 100.67.241.163/27&#xa;Self IP: 100.67.239.249/24&#xa;Float IP: 100.67.239.250/24 (Active)&#xa;HA IP: 100.67.242.67/27&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Status: Active&#xa;Traffic Group 1: Active&#xa;Config Sync: Primary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccffcc;strokeColor=#00cc00;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="50" y="80" width="350" height="200" as="geometry"/>
+        </mxCell>
+        
+        <!-- Secondary Device -->
+        <mxCell id="ha_secondary" value="SGP-TCX-MGH-IPC-LB02 (STANDBY)&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Management IP: 100.67.241.162/27&#xa;Self IP: 100.67.239.248/24&#xa;Float IP: 100.67.239.250/24 (Standby)&#xa;HA IP: 100.67.242.66/27&#xa;━━━━━━━━━━━━━━━━━━━━━━━&#xa;Status: Standby&#xa;Traffic Group 1: Standby&#xa;Config Sync: Secondary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;strokeWidth=2;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="350" height="200" as="geometry"/>
+        </mxCell>
+        
+        <!-- HA Communications -->
+        <mxCell id="ha_comm" value="HA Cluster Communication&#xa;━━━━━━━━━━━━━━━━━━━━━━━" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffcc;strokeColor=#999900;strokeWidth=2;fontSize=10;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="310" width="600" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Heartbeat -->
+        <mxCell id="ha_heartbeat" value="Heartbeat Signal&#xa;VLAN 766 (HA Network)&#xa;Interface 1.3&#xa;UDP Port 1026&#xa;Interval: Frequent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f3ff;strokeColor=#0066cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="50" y="360" width="200" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Config Sync -->
+        <mxCell id="ha_configsync" value="Configuration Sync&#xa;Auto-Sync: Enabled&#xa;Device Group: SYNC&#xa;Bidirectional Sync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f3ff;strokeColor=#0066cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="300" y="360" width="200" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- State Mirroring -->
+        <mxCell id="ha_statemirror" value="State Mirroring&#xa;Primary: 100.67.242.67&#xa;Secondary: 100.67.239.249&#xa;Connection Data Sync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f3ff;strokeColor=#0066cc;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="550" y="360" width="200" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Failover Mechanism -->
+        <mxCell id="failover_section" value="Failover Mechanism&#xa;━━━━━━━━━━━━━━━━━━━━━━━" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;strokeWidth=2;fontSize=10;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="520" width="900" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="failover_triggers" value="Failover Triggers:&#xa;1. Heartbeat Loss (Primary Down)&#xa;2. Network Failsafe (VLAN 816)&#xa;3. Manual Failover" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#ff9900;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="50" y="570" width="400" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="failover_actions" value="Failover Actions:&#xa;1. Float IP (.250) moves to Secondary&#xa;2. Secondary becomes Active&#xa;3. Primary becomes Standby&#xa;4. Traffic automatically redirected" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#ff9900;strokeWidth=1;fontSize=8" vertex="1" parent="1">
+          <mxGeometry x="550" y="570" width="400" height="100" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
