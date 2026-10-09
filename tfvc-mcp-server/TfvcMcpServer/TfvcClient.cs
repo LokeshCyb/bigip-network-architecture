@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace TfvcMcpServer;
 
@@ -11,23 +12,16 @@ public sealed class TfvcClient
     private readonly string _baseUrl;
     public string RootPath { get; }
 
-    public TfvcClient()
+    public TfvcClient(IOptions<AzureDevOpsOptions> options)
     {
-        var org = Env("AZDO_ORG", "MG-Group-Holidays");
-        var project = Env("AZDO_PROJECT", "MG-Grp");
-        RootPath = Env("AZDO_ROOT_PATH", "$/MG-Grp/Source/Main-Dotnet-Upgrade").TrimEnd('/');
-        var pat = Environment.GetEnvironmentVariable("AZDO_PAT")
-            ?? throw new InvalidOperationException("AZDO_PAT environment variable is required.");
-        _baseUrl = $"https://dev.azure.com/{Uri.EscapeDataString(org)}/{Uri.EscapeDataString(project)}/_apis/tfvc";
+        var o = options.Value;
+        if (string.IsNullOrWhiteSpace(o.Pat) || o.Pat.StartsWith("<"))
+            throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
+        RootPath = o.RootPath.Replace('\\', '/').TrimEnd('/');
+        _baseUrl = $"https://dev.azure.com/{Uri.EscapeDataString(o.Organization)}/{Uri.EscapeDataString(o.Project)}/_apis/tfvc";
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(":" + pat)));
-    }
-
-    private static string Env(string name, string fallback)
-    {
-        var v = Environment.GetEnvironmentVariable(name);
-        return string.IsNullOrWhiteSpace(v) ? fallback : v;
+            "Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(":" + o.Pat)));
     }
 
     /// Resolves a path and ensures it stays inside the configured root.
@@ -68,4 +62,12 @@ public sealed class TfvcClient
 
     public Task<string> GetChangesetChangesAsync(int id, CancellationToken ct) =>
         GetAsync($"changesets/{id}/changes?api-version={ApiVersion}", ct);
+}
+
+public sealed class AzureDevOpsOptions
+{
+    public string Organization { get; set; } = "MG-Group-Holidays";
+    public string Project { get; set; } = "MG-Grp";
+    public string RootPath { get; set; } = "$/MG-Grp/Source/Main-Dotnet-Upgrade";
+    public string Pat { get; set; } = "";
 }
