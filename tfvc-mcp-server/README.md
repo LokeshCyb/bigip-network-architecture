@@ -2,19 +2,18 @@
 
 Read-only MCP server (stdio) for an Azure DevOps TFVC repository.
 
-Environment variables:
-- `AZDO_PAT` (required; PAT with Code (Read)) - never commit it
-- `AZDO_ORG` (default `MG-Group-Holidays`), `AZDO_PROJECT` (default `MG-Grp`)
-- `AZDO_ROOT_PATH` (default `$/MG-Grp/Source/Main-Dotnet-Upgrade`)
+Configuration (`TfvcMcpServer/appsettings.json`, section `AzureDevOps`): `Organization`, `Project`, `RootPath`, `Pat`.
+Do not commit the PAT: copy `appsettings.Local.json.example` to `appsettings.Local.json` (git-ignored) and set `Pat`.
+Environment variables override files, e.g. `AzureDevOps__Pat`.
 
 Run: `cd TfvcMcpServer && dotnet run`
+Unit tests: `dotnet test TfvcMcpServer.Tests`
 Test: `npx @modelcontextprotocol/inspector dotnet run`
 
 VS Code `.vscode/mcp.json`:
 ```json
 { "servers": { "tfvc": { "type": "stdio", "command": "dotnet",
   "args": ["run","--project","tfvc-mcp-server/TfvcMcpServer"],
-  "env": { "AZDO_PAT": "${input:pat}" } } },
-  "inputs": [{ "id": "pat", "type": "promptString", "password": true, "description": "Azure DevOps PAT" }] }
+  "env": {} } } }
 ```
 Tools: list_items, get_file_content, search_files, get_changesets, get_changeset, get_changeset_changes.
