@@ -8,20 +8,21 @@ namespace TfvcMcpServer;
 public sealed class AzureDevOpsClient
 {
     private const string ApiVersion = "7.1";
+    private const int MaxErrorChars = 500;
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
     public AzureDevOpsClient(IOptions<AzureDevOpsOptions> options, HttpClient http)
     {
         var settings = options.Value;
-        if (string.IsNullOrWhiteSpace(settings.Pat) || settings.Pat.StartsWith("<"))
-            throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
-
+        Pat = settings.Pat;
         _baseUrl = $"https://dev.azure.com/{Uri.EscapeDataString(settings.Organization)}/{Uri.EscapeDataString(settings.Project)}/_apis";
         _http = http;
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(":" + settings.Pat)));
+            "Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(":" + Pat)));
     }
+
+    private string Pat { get; }
 
     public Task<string> QueryWorkItemsAsync(string wiql, CancellationToken ct) =>
         SendAsync(HttpMethod.Post, $"wit/wiql?api-version={ApiVersion}",
@@ -46,14 +47,26 @@ public sealed class AzureDevOpsClient
         return SendAsync(HttpMethod.Post, $"wit/workitems/${Uri.EscapeDataString(type)}?api-version={ApiVersion}", content, ct);
     }
 
-    public Task<string> UpdateWorkItemAsync(int id, string patchJson, CancellationToken ct)
+    public async Task<string> UpdateWorkItemAsync(int id, string patchJson, CancellationToken ct)
     {
-        using var patch = JsonDocument.Parse(patchJson);
-        if (patch.RootElement.ValueKind != JsonValueKind.Array)
-            throw new ArgumentException("Work item updates must be a JSON Patch array.", nameof(patchJson));
+        JsonDocument patch;
+        try
+        {
+            patch = JsonDocument.Parse(patchJson);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("Work item updates must be valid JSON Patch.", nameof(patchJson), ex);
+        }
 
-        var content = new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json");
-        return SendAsync(HttpMethod.Patch, $"wit/workitems/{id}?api-version={ApiVersion}", content, ct);
+        using (patch)
+        {
+            if (patch.RootElement.ValueKind != JsonValueKind.Array)
+                throw new ArgumentException("Work item updates must be a JSON Patch array.", nameof(patchJson));
+
+            var content = new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json");
+            return await SendAsync(HttpMethod.Patch, $"wit/workitems/{id}?api-version={ApiVersion}", content, ct);
+        }
     }
 
     public Task<string> ListRepositoriesAsync(CancellationToken ct) =>
@@ -64,11 +77,17 @@ public sealed class AzureDevOpsClient
 
     private async Task<string> SendAsync(HttpMethod method, string relative, HttpContent? content, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith("<", StringComparison.Ordinal))
+            throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
+
         using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}") { Content = content };
         using var response = await _http.SendAsync(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Azure DevOps returned {(int)response.StatusCode}: {body[..Math.Min(body.Length, 500)]}");
+            throw new InvalidOperationException($"Azure DevOps returned {(int)response.StatusCode}: {Truncate(body, MaxErrorChars)}");
         return body;
     }
+
+    private static string Truncate(string value, int maxChars) =>
+        value.Length <= maxChars ? value : value[..maxChars] + "...[truncated]";
 }

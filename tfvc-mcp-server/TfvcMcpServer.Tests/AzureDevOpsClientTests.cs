@@ -63,6 +63,17 @@ public class AzureDevOpsClientTests
     }
 
     [Fact]
+    public async Task CreateWorkItem_OmitsEmptyDescription()
+    {
+        var handler = new RecordingHandler();
+
+        await Create(handler).CreateWorkItemAsync("Task", "A title", null, default);
+
+        Assert.Contains("\"/fields/System.Title\"", handler.Body);
+        Assert.DoesNotContain("System.Description", handler.Body);
+    }
+
+    [Fact]
     public async Task UpdateWorkItem_PatchesRequestedItem()
     {
         var handler = new RecordingHandler();
@@ -82,6 +93,17 @@ public class AzureDevOpsClientTests
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             client.UpdateWorkItemAsync(42, """{"op":"add"}""", default));
+    }
+
+    [Fact]
+    public async Task UpdateWorkItem_RejectsMalformedJson()
+    {
+        var client = Create(new RecordingHandler());
+
+        var error = await Assert.ThrowsAsync<ArgumentException>(() =>
+            client.UpdateWorkItemAsync(42, "{", default));
+
+        Assert.Contains("valid JSON Patch", error.Message);
     }
 
     [Fact]
@@ -109,12 +131,25 @@ public class AzureDevOpsClientTests
         Assert.Contains("access denied", error.Message);
     }
 
-    private static AzureDevOpsClient Create(RecordingHandler handler) =>
+    [Theory]
+    [InlineData("")]
+    [InlineData("<set-in-appsettings.Local.json>")]
+    public async Task Request_WithoutConfiguredPat_FailsClearly(string pat)
+    {
+        var client = Create(new RecordingHandler(), pat);
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.ListRepositoriesAsync(default));
+
+        Assert.Contains("AzureDevOps:Pat is not configured", error.Message);
+    }
+
+    private static AzureDevOpsClient Create(RecordingHandler handler, string pat = "test-pat") =>
         new(Options.Create(new AzureDevOpsOptions
         {
             Organization = Organization,
             Project = Project,
-            Pat = "test-pat"
+            Pat = pat
         }), new HttpClient(handler));
 
     private sealed class RecordingHandler(HttpStatusCode status = HttpStatusCode.OK, string responseBody = "{}") : HttpMessageHandler
