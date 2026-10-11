@@ -9,7 +9,7 @@ public sealed class AzureDevOpsClient
 {
     private const string ApiVersion = "7.1";
     private const int MaxErrorChars = 500;
-    private const string ExamplePatPlaceholderPrefix = "<";
+    private const string PlaceholderPatPrefix = "<";
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
@@ -57,7 +57,7 @@ public sealed class AzureDevOpsClient
         }
         catch (JsonException ex)
         {
-            throw new ArgumentException("Work item updates must be valid JSON Patch.", nameof(patchJson), ex);
+            throw new ArgumentException("patchJson is not valid JSON.", nameof(patchJson), ex);
         }
 
         using (patch)
@@ -78,7 +78,8 @@ public sealed class AzureDevOpsClient
 
     private async Task<string> SendAsync(HttpMethod method, string relative, CancellationToken ct, Func<HttpContent?>? contentFactory = null)
     {
-        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith(ExamplePatPlaceholderPrefix, StringComparison.Ordinal))
+        // appsettings.Local.json.example uses '<...>' to mark the PAT placeholder.
+        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith(PlaceholderPatPrefix, StringComparison.Ordinal))
             throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
 
         using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}")

@@ -103,7 +103,7 @@ public class AzureDevOpsClientTests
         var error = await Assert.ThrowsAsync<ArgumentException>(() =>
             client.UpdateWorkItemAsync(42, "{", default));
 
-        Assert.Contains("valid JSON Patch", error.Message);
+        Assert.Contains("not valid JSON", error.Message);
     }
 
     [Fact]
