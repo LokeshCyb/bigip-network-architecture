@@ -9,6 +9,7 @@ public sealed class AzureDevOpsClient
 {
     private const string ApiVersion = "7.1";
     private const int MaxErrorChars = 500;
+    private const string ExamplePatPlaceholderPrefix = "<";
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
@@ -42,6 +43,7 @@ public sealed class AzureDevOpsClient
             patch.Add(new { op = "add", path = "/fields/System.Description", value = description });
 
         var patchJson = JsonSerializer.Serialize(patch);
+        // Azure DevOps requires the literal '$' before the escaped work item type.
         return SendAsync(HttpMethod.Post, $"wit/workitems/${Uri.EscapeDataString(type)}?api-version={ApiVersion}", ct,
             () => new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json"));
     }
@@ -76,7 +78,7 @@ public sealed class AzureDevOpsClient
 
     private async Task<string> SendAsync(HttpMethod method, string relative, CancellationToken ct, Func<HttpContent?>? contentFactory = null)
     {
-        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith("<", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith(ExamplePatPlaceholderPrefix, StringComparison.Ordinal))
             throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
 
         using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}")
