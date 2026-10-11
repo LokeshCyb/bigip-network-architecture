@@ -18,21 +18,19 @@ public sealed class AzureDevOpsClient
         Pat = settings.Pat;
         _baseUrl = $"https://dev.azure.com/{Uri.EscapeDataString(settings.Organization)}/{Uri.EscapeDataString(settings.Project)}/_apis";
         _http = http;
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(":" + Pat)));
     }
 
     private string Pat { get; }
 
     public Task<string> QueryWorkItemsAsync(string wiql, CancellationToken ct) =>
-        SendAsync(HttpMethod.Post, $"wit/wiql?api-version={ApiVersion}",
-            new StringContent(JsonSerializer.Serialize(new { query = wiql }), Encoding.UTF8, "application/json"), ct);
+        SendAsync(HttpMethod.Post, $"wit/wiql?api-version={ApiVersion}", ct,
+            () => new StringContent(JsonSerializer.Serialize(new { query = wiql }), Encoding.UTF8, "application/json"));
 
     public Task<string> GetWorkItemAsync(int id, CancellationToken ct) =>
-        SendAsync(HttpMethod.Get, $"wit/workitems/{id}?$expand=all&api-version={ApiVersion}", null, ct);
+        SendAsync(HttpMethod.Get, $"wit/workitems/{id}?$expand=all&api-version={ApiVersion}", ct);
 
     public Task<string> ListWorkItemTypesAsync(CancellationToken ct) =>
-        SendAsync(HttpMethod.Get, $"wit/workitemtypes?api-version={ApiVersion}", null, ct);
+        SendAsync(HttpMethod.Get, $"wit/workitemtypes?api-version={ApiVersion}", ct);
 
     public Task<string> CreateWorkItemAsync(string type, string title, string? description, CancellationToken ct)
     {
@@ -43,8 +41,9 @@ public sealed class AzureDevOpsClient
         if (!string.IsNullOrWhiteSpace(description))
             patch.Add(new { op = "add", path = "/fields/System.Description", value = description });
 
-        var content = new StringContent(JsonSerializer.Serialize(patch), Encoding.UTF8, "application/json-patch+json");
-        return SendAsync(HttpMethod.Post, $"wit/workitems/${Uri.EscapeDataString(type)}?api-version={ApiVersion}", content, ct);
+        var patchJson = JsonSerializer.Serialize(patch);
+        return SendAsync(HttpMethod.Post, $"wit/workitems/${Uri.EscapeDataString(type)}?api-version={ApiVersion}", ct,
+            () => new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json"));
     }
 
     public async Task<string> UpdateWorkItemAsync(int id, string patchJson, CancellationToken ct)
@@ -64,23 +63,28 @@ public sealed class AzureDevOpsClient
             if (patch.RootElement.ValueKind != JsonValueKind.Array)
                 throw new ArgumentException("Work item updates must be a JSON Patch array.", nameof(patchJson));
 
-            var content = new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json");
-            return await SendAsync(HttpMethod.Patch, $"wit/workitems/{id}?api-version={ApiVersion}", content, ct);
+            return await SendAsync(HttpMethod.Patch, $"wit/workitems/{id}?api-version={ApiVersion}", ct,
+                () => new StringContent(patchJson, Encoding.UTF8, "application/json-patch+json"));
         }
     }
 
     public Task<string> ListRepositoriesAsync(CancellationToken ct) =>
-        SendAsync(HttpMethod.Get, $"git/repositories?api-version={ApiVersion}", null, ct);
+        SendAsync(HttpMethod.Get, $"git/repositories?api-version={ApiVersion}", ct);
 
     public Task<string> GetRepositoryAsync(string repositoryId, CancellationToken ct) =>
-        SendAsync(HttpMethod.Get, $"git/repositories/{Uri.EscapeDataString(repositoryId)}?api-version={ApiVersion}", null, ct);
+        SendAsync(HttpMethod.Get, $"git/repositories/{Uri.EscapeDataString(repositoryId)}?api-version={ApiVersion}", ct);
 
-    private async Task<string> SendAsync(HttpMethod method, string relative, HttpContent? content, CancellationToken ct)
+    private async Task<string> SendAsync(HttpMethod method, string relative, CancellationToken ct, Func<HttpContent?>? contentFactory = null)
     {
         if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith("<", StringComparison.Ordinal))
             throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
 
-        using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}") { Content = content };
+        using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}")
+        {
+            Content = contentFactory?.Invoke()
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(":" + Pat)));
         using var response = await _http.SendAsync(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)

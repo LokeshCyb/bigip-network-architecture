@@ -117,6 +117,9 @@ public class AzureDevOpsClientTests
 
         await client.GetRepositoryAsync("repo-id", default);
         Assert.Contains("/git/repositories/repo-id", handler.Uri!.AbsoluteUri);
+
+        await client.GetRepositoryAsync("folder/repo name", default);
+        Assert.Contains("folder%2Frepo%20name", handler.Uri!.AbsoluteUri);
     }
 
     [Fact]
@@ -131,17 +134,30 @@ public class AzureDevOpsClientTests
         Assert.Contains("access denied", error.Message);
     }
 
+    [Fact]
+    public async Task FailedRequest_TruncatesLongResponseBody()
+    {
+        var handler = new RecordingHandler(HttpStatusCode.InternalServerError, new string('x', 501));
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Create(handler).ListRepositoriesAsync(default));
+
+        Assert.EndsWith("...[truncated]", error.Message);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("<set-in-appsettings.Local.json>")]
     public async Task Request_WithoutConfiguredPat_FailsClearly(string pat)
     {
-        var client = Create(new RecordingHandler(), pat);
+        var handler = new RecordingHandler();
+        var client = Create(handler, pat);
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             client.ListRepositoriesAsync(default));
 
         Assert.Contains("AzureDevOps:Pat is not configured", error.Message);
+        Assert.Null(handler.Uri);
     }
 
     private static AzureDevOpsClient Create(RecordingHandler handler, string pat = "test-pat") =>
