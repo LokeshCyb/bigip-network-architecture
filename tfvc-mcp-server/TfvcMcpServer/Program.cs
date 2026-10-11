@@ -13,6 +13,7 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 builder.Services.Configure<AzureDevOpsOptions>(builder.Configuration.GetSection("AzureDevOps"));
 builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services.AddSingleton<TfvcClient>();
+builder.Services.AddHttpClient<AzureDevOpsClient>();
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
