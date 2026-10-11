@@ -35,7 +35,7 @@ public class AzureDevOpsClientTests
 
         Assert.Equal(HttpMethod.Get, handler.Method);
         Assert.Contains("/wit/workitems/42", handler.Uri!.AbsoluteUri);
-        Assert.Contains("$expand=all", handler.Uri.Query);
+        Assert.DoesNotContain("$expand", handler.Uri.Query);
     }
 
     [Fact]

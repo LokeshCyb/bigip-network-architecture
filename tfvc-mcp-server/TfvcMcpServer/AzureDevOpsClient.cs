@@ -9,7 +9,7 @@ public sealed class AzureDevOpsClient
 {
     private const string ApiVersion = "7.1";
     private const int MaxErrorChars = 500;
-    private const string PlaceholderPatPrefix = "<";
+    private const char PlaceholderDelimiter = '<';
     private readonly HttpClient _http;
     private readonly string _baseUrl;
 
@@ -28,7 +28,7 @@ public sealed class AzureDevOpsClient
             () => new StringContent(JsonSerializer.Serialize(new { query = wiql }), Encoding.UTF8, "application/json"));
 
     public Task<string> GetWorkItemAsync(int id, CancellationToken ct) =>
-        SendAsync(HttpMethod.Get, $"wit/workitems/{id}?$expand=all&api-version={ApiVersion}", ct);
+        SendAsync(HttpMethod.Get, $"wit/workitems/{id}?api-version={ApiVersion}", ct);
 
     public Task<string> ListWorkItemTypesAsync(CancellationToken ct) =>
         SendAsync(HttpMethod.Get, $"wit/workitemtypes?api-version={ApiVersion}", ct);
@@ -78,8 +78,8 @@ public sealed class AzureDevOpsClient
 
     private async Task<string> SendAsync(HttpMethod method, string relative, CancellationToken ct, Func<HttpContent?>? contentFactory = null)
     {
-        // appsettings.Local.json.example uses '<...>' to mark the PAT placeholder.
-        if (string.IsNullOrWhiteSpace(Pat) || Pat.StartsWith(PlaceholderPatPrefix, StringComparison.Ordinal))
+        // appsettings.Local.json.example marks its placeholder with angle brackets.
+        if (!IsPatConfigured())
             throw new InvalidOperationException("AzureDevOps:Pat is not configured. Set it in appsettings.Local.json, user-secrets or the AzureDevOps__Pat environment variable.");
 
         using var request = new HttpRequestMessage(method, $"{_baseUrl}/{relative}")
@@ -97,4 +97,8 @@ public sealed class AzureDevOpsClient
 
     private static string Truncate(string value, int maxChars) =>
         value.Length <= maxChars ? value : value[..maxChars] + "...[truncated]";
+
+    private bool IsPatConfigured() =>
+        !string.IsNullOrWhiteSpace(Pat) &&
+        !(Pat[0] == PlaceholderDelimiter && Pat[^1] == '>');
 }
