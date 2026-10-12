@@ -1,5 +1,8 @@
 {
   "AzureDevOps": {
-    "Pat": "<your read-only PAT>"
+    "Pat": "<your PAT>"
+  },
+  "Mcp": {
+    "ApiKeys": [ "<long-random-key-for-http-mode>" ]
   }
 }
