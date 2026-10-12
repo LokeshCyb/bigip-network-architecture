@@ -76,6 +76,27 @@ public sealed class AzureDevOpsClient
     public Task<string> GetRepositoryAsync(string repositoryId, CancellationToken ct) =>
         SendAsync(HttpMethod.Get, $"git/repositories/{Uri.EscapeDataString(repositoryId)}?api-version={ApiVersion}", ct);
 
+    public Task<string> ListBranchesAsync(string repositoryId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"git/repositories/{Uri.EscapeDataString(repositoryId)}/refs?filter=heads/&api-version={ApiVersion}", ct);
+
+    public Task<string> ListPipelinesAsync(CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"pipelines?api-version={ApiVersion}", ct);
+
+    public Task<string> GetPipelineAsync(int pipelineId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"pipelines/{pipelineId}?api-version={ApiVersion}", ct);
+
+    public Task<string> ListPipelineRunsAsync(int pipelineId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"pipelines/{pipelineId}/runs?api-version={ApiVersion}", ct);
+
+    public Task<string> GetPipelineRunAsync(int pipelineId, int runId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"pipelines/{pipelineId}/runs/{runId}?api-version={ApiVersion}", ct);
+
+    public Task<string> ListBuildsAsync(int top, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"build/builds?$top={Math.Clamp(top, 1, 100)}&queryOrder=queueTimeDescending&api-version={ApiVersion}", ct);
+
+    public Task<string> GetBuildAsync(int buildId, CancellationToken ct) =>
+        SendAsync(HttpMethod.Get, $"build/builds/{buildId}?api-version={ApiVersion}", ct);
+
     private async Task<string> SendAsync(HttpMethod method, string relative, CancellationToken ct, Func<HttpContent?>? contentFactory = null)
     {
         // appsettings.Local.json.example marks its placeholder with angle brackets.

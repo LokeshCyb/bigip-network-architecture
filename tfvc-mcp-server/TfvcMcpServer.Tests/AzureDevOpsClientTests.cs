@@ -49,6 +49,25 @@ public class AzureDevOpsClientTests
     }
 
     [Fact]
+    public async Task PipelineAndBuildCalls_UseExpectedEndpoints()
+    {
+        var handler = new RecordingHandler();
+        var client = Create(handler);
+
+        await client.ListPipelinesAsync(default);
+        Assert.Contains("/_apis/pipelines?", handler.Uri!.AbsoluteUri);
+        await client.ListPipelineRunsAsync(7, default);
+        Assert.Contains("/pipelines/7/runs", handler.Uri!.AbsoluteUri);
+        await client.GetPipelineRunAsync(7, 9, default);
+        Assert.Contains("/pipelines/7/runs/9", handler.Uri!.AbsoluteUri);
+        await client.ListBuildsAsync(500, default);
+        Assert.Contains("/build/builds", handler.Uri!.AbsoluteUri);
+        Assert.Contains("$top=100", handler.Uri.Query);
+        await client.ListBranchesAsync("repo", default);
+        Assert.Contains("/git/repositories/repo/refs", handler.Uri!.AbsoluteUri);
+    }
+
+    [Fact]
     public async Task CreateWorkItem_PostsTitleAndDescriptionAsJsonPatch()
     {
         var handler = new RecordingHandler();

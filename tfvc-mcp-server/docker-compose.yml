@@ -1,0 +1,9 @@
+services:
+  azure-devops-mcp:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # holds AzureDevOps:Pat and Mcp:ApiKeys (copy from appsettings.Local.json.example)
+      - ./TfvcMcpServer/appsettings.Local.json:/app/appsettings.Local.json:ro

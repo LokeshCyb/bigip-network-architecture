@@ -40,4 +40,32 @@ public sealed class AzureDevOpsTools(AzureDevOpsClient client)
     [McpServerTool(Name = "get_repository"), Description("Get an Azure DevOps Git repository by ID or name.")]
     public Task<string> GetRepository([Description("Git repository ID or name")] string repositoryId, CancellationToken ct = default) =>
         client.GetRepositoryAsync(repositoryId, ct);
+
+    [McpServerTool(Name = "list_branches"), Description("List branches of a Git repository.")]
+    public Task<string> ListBranches([Description("Git repository ID or name")] string repositoryId, CancellationToken ct = default) =>
+        client.ListBranchesAsync(repositoryId, ct);
+
+    [McpServerTool(Name = "list_pipelines"), Description("List pipelines in the configured Azure DevOps project.")]
+    public Task<string> ListPipelines(CancellationToken ct = default) =>
+        client.ListPipelinesAsync(ct);
+
+    [McpServerTool(Name = "get_pipeline"), Description("Get a pipeline by ID.")]
+    public Task<string> GetPipeline([Description("Pipeline ID")] int pipelineId, CancellationToken ct = default) =>
+        client.GetPipelineAsync(pipelineId, ct);
+
+    [McpServerTool(Name = "list_pipeline_runs"), Description("List runs of a pipeline.")]
+    public Task<string> ListPipelineRuns([Description("Pipeline ID")] int pipelineId, CancellationToken ct = default) =>
+        client.ListPipelineRunsAsync(pipelineId, ct);
+
+    [McpServerTool(Name = "get_pipeline_run"), Description("Get a single pipeline run.")]
+    public Task<string> GetPipelineRun([Description("Pipeline ID")] int pipelineId, [Description("Run ID")] int runId, CancellationToken ct = default) =>
+        client.GetPipelineRunAsync(pipelineId, runId, ct);
+
+    [McpServerTool(Name = "list_builds"), Description("List recent builds (classic and YAML), newest first.")]
+    public Task<string> ListBuilds([Description("Max builds, 1-100")] int top = 20, CancellationToken ct = default) =>
+        client.ListBuildsAsync(top, ct);
+
+    [McpServerTool(Name = "get_build"), Description("Get build details by ID.")]
+    public Task<string> GetBuild([Description("Build ID")] int buildId, CancellationToken ct = default) =>
+        client.GetBuildAsync(buildId, ct);
 }
